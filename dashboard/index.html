@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta
+      name="description"
+      content="Explore NBA first and second half scoring margins with transparent local data."
+    />
+    <title>QuantBet · Team tendencies</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <a class="brand" href="#main"
+        ><span class="mark">Q<span>↗</span></span> QuantBet
+        <small>RESEARCH LAB</small></a
+      ><span class="tag">NBA / TEAM TENDENCIES</span>
+    </header>
+    <main id="main">
+      <div class="intro">
+        <div>
+          <p class="eyebrow">THE GAME WITHIN THE GAME</p>
+          <h1>How does your team<br /><em>finish what it starts?</em></h1>
+          <p class="subtitle">
+            Explore first-half edges, second-half swings and the shape of a
+            season.
+          </p>
+        </div>
+        <div class="scope">
+          <span class="dot"></span> EXPLORATORY ANALYSIS
+          <p>
+            Scoring margins, measured in points.<br />Each game is one
+            observation.
+          </p>
+        </div>
+      </div>
+      <div id="notice" class="notice" role="status">
+        Build local data with the dashboard builder to begin. No browser API
+        requests are made.
+      </div>
+      <form id="filters" class="filters" aria-label="Dashboard filters">
+        <label
+          >Season<select id="season">
+            <option value="2027">2026–27 · current</option>
+            <option value="2026">2025–26 · development</option>
+          </select></label
+        >
+        <label
+          >Team<select id="team">
+            <option value="">No teams loaded</option>
+          </select></label
+        >
+        <label
+          >Venue<select id="venue">
+            <option value="all">All games</option>
+            <option value="home">Home</option>
+            <option value="away">Away</option>
+          </select></label
+        >
+        <label>Through date (ET)<input id="asof" type="date" required /></label>
+        <label
+          >Sample<select id="recent">
+            <option value="0">All eligible games</option>
+            <option value="5">Last 5 per team</option>
+            <option value="10">Last 10 per team</option>
+            <option value="20">Last 20 per team</option>
+          </select></label
+        >
+        <button type="button" id="reset" class="quiet">Reset</button>
+      </form>
+      <section aria-labelledby="league-title" class="panel league">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">01 / LEAGUE LANDSCAPE</p>
+            <h2 id="league-title">Start strong. Finish stronger.</h2>
+            <p>
+              Average H1 margin × regulation H2 margin. Select a dot or team row
+              to inspect.
+            </p>
+          </div>
+          <span class="pill" id="league-count"></span>
+        </div>
+        <div class="league-grid">
+          <div id="scatter" class="scatter"></div>
+          <div class="table-wrap league-table">
+            <table id="league-table">
+              <caption>
+                Team comparison · same filters, recent games per team
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col" data-key="name">
+                    <button type="button">Team ↕</button>
+                  </th>
+                  <th scope="col" data-key="n">
+                    <button type="button">GP ↕</button>
+                  </th>
+                  <th scope="col" data-key="h1">
+                    <button type="button">H1 ↕</button>
+                  </th>
+                  <th scope="col" data-key="h2">
+                    <button type="button">H2 ↕</button>
+                  </th>
+                  <th scope="col" data-key="improvement">
+                    <button type="button">Δ ↕</button>
+                  </th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <p class="footnote">
+          H1 = Q1 + Q2. H2 = Q3 + Q4. Δ = H2 − H1. Positive margins favor the
+          team. Overtime affects the final result only.
+        </p>
+      </section>
+      <section id="team-section" aria-labelledby="team-title">
+        <div class="section-head team-head">
+          <div>
+            <p class="eyebrow">02 / TEAM DEEP DIVE</p>
+            <h2 id="team-title">Team profile</h2>
+            <p id="sample-label" aria-live="polite"></p>
+          </div>
+          <button type="button" id="export">↓ Export filtered CSV</button>
+        </div>
+        <div id="team-content"></div>
+      </section>
+      <section class="panel history" aria-labelledby="history-title">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">03 / GAME BY GAME</p>
+            <h2 id="history-title">The full picture</h2>
+            <p>
+              Final scores include overtime. Quarter and half margins exclude
+              overtime.
+            </p>
+          </div>
+          <button type="button" id="snapshot" class="quiet">
+            Export JSON + provenance
+          </button>
+        </div>
+        <div class="table-wrap">
+          <table id="history">
+            <caption>
+              Selected team's filtered game history, newest first
+            </caption>
+            <thead>
+              <tr>
+                <th>Date (ET)</th>
+                <th>Opponent</th>
+                <th>Venue</th>
+                <th>Score</th>
+                <th>Final Δ</th>
+                <th>Q1</th>
+                <th>Q2</th>
+                <th>Q3</th>
+                <th>Q4</th>
+                <th>H1</th>
+                <th>H2</th>
+                <th>H2−H1</th>
+                <th>OT</th>
+                <th>Game ID</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+      <section class="panel methodology">
+        <p class="eyebrow">READ THE FINE PRINT</p>
+        <h2>Transparent by design.</h2>
+        <div class="method-grid">
+          <div>
+            <h3>What these numbers mean</h3>
+            <p>
+              Quarter margin d is team points minus opponent points in that
+              quarter. Quarter-end lead c sums all regulation quarters to that
+              break. They are distinct measures. Final results include all
+              overtime.
+            </p>
+            <p>
+              Comeback = final wins among games trailing at halftime. Retention
+              = final wins among games leading at halftime. Tied halftime is
+              separate. Unavailable rates appear as —. Variability is sample
+              standard deviation across games, with no inference or prediction.
+            </p>
+          </div>
+          <div>
+            <h3>Research boundary</h3>
+            <p>
+              Inspecting 2026–27 team patterns compromises untouched holdout
+              status for explored games. Code separation does not preserve
+              statistical independence. A replacement final test period remains
+              undecided. The existing Miami–Golden State 2026-11-05 exclusion
+              remains documented.
+            </p>
+            <p>
+              Descriptive scoring only: no possession efficiency, opponent
+              adjustment, causal halftime effect, validated predictions or
+              profitability claims.
+            </p>
+          </div>
+        </div>
+        <details>
+          <summary>
+            Source, coverage, exclusions &amp; exposure manifest
+          </summary>
+          <div id="provenance"></div>
+        </details>
+      </section>
+      <footer>
+        QUANTBET <span>Evidence before conviction.</span
+        ><span>Local data · No external browser requests</span>
+      </footer>
+    </main>
+    <script id="dataset" type="application/json">
+      "__QUANTBET_DATA__"
+    </script>
+    <script src="app.js"></script>
+  </body>
+</html>
