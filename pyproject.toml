@@ -8,11 +8,17 @@ dependencies = [
     "httpx>=0.27",
     "numpy>=2.0",
     "plotly>=5.24",
+    "polars>=2.1.0",
+    "pyarrow>=26.0.1",
+    "pyyaml>=6.0.3",
     "tenacity>=9.0",
 ]
 
 [dependency-groups]
-dev = ["ruff>=0.7"]
+dev = [
+    "pytest>=9.2.0",
+    "ruff>=0.7",
+]
 
 [build-system]
 requires = ["hatchling"]
@@ -20,6 +26,9 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/quantbet_nba"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
 
 [tool.ruff]
 line-length = 100

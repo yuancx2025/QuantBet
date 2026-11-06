@@ -2,6 +2,8 @@
 
 Date: 2026-11-06. Scope: research and paper plans for orders chosen before tipoff and held through the game. This document proposes the next implementation steps from the current discussion; it does not start training, change the existing holdout, approve purchases, or mark other Stage 0 proposals accepted.
 
+Amended by `docs/decisions/0004-data-scope-and-tuning-games.md`: ESPN data is allowed where this plan says licensed data, 2026-27 games through 2026-12-03 are tuning games rather than holdout, and results are reported gross of fees for testing.
+
 ## 1. What exists and what comes next
 
 The repository currently contains the Stage 0 data/timing spike, its cached responses, charts, and decision records. It has no production ingestion pipeline, point-in-time feature tables, training modules, or trained models. The next implementation milestone is a validated training dataset and one reproducible baseline training run.

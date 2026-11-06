@@ -11,5 +11,8 @@ when that file is created in Stage 1.
 **Why:** the holdout is only valid if nothing about it was seen before the frozen test. One game has
 little effect, but excluding it is cheap and keeps the rule simple.
 
+Update: [0004](0004-data-scope-and-tuning-games.md) moves this game into a tuning set, so the
+exclusion is no longer needed.
+
 All Stage 0 analysis uses 2025-26 games. The spec's Stage 0 instructions said to use 2026-27 games,
 and this project does not follow that part.

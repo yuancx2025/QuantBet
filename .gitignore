@@ -1,6 +1,7 @@
 # Data and generated output (rebuildable, or subject to provider terms)
-data/
+/data/
 reports/
+runs/
 mlruns/
 
 # Secrets

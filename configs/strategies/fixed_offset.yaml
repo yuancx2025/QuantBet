@@ -1,0 +1,33 @@
+# The baseline, with no model: bid a fixed distance below the Kalshi mid and hold through the game.
+# Comparison baseline is placing no orders, which earns exactly zero.
+name: fixed_offset_v1
+season: "2025-26"
+period: development
+
+strategy:
+  name: fixed_offset
+  offsets_cents: [5, 10, 15]
+  hours_before: 2
+
+execution:
+  placement_latency_s: 2
+  cancel_latency_s: 2
+  min_price: 0.02
+  max_price: 0.98
+  max_quote_age_s: 900
+
+# Scenario shown in detail in the report. The rest appear in the summary table.
+primary_scenario:
+  fill_model: through_limit
+  side: both
+  size: 1
+
+scenarios:
+  # Every side under both one-contract fill rules.
+  - fill_model: [touch_at_limit, through_limit]
+    side: [favorite, underdog, both]
+    size: [1]
+  # Capacity: what happens when only volume printed below the limit can fill the order.
+  - fill_model: [through_with_volume]
+    side: [favorite, underdog, both]
+    size: [1, 10, 100]

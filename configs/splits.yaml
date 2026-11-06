@@ -1,0 +1,20 @@
+# Game splits. Boundaries use the US local date in the Kalshi ticker (26NOV05 = 2026-11-05).
+# Rationale: docs/decisions/0002-holdout-exclusion.md and 0004-data-scope-and-tuning-games.md.
+
+development:
+  season: "2025-26"
+  game_type: regular
+  uses: [fit, calibrate, tune]
+
+tuning_2026_27:
+  season: "2026-27"
+  game_type: regular
+  last_ticker_date: "2026-12-03"
+  uses: [tune]
+
+holdout:
+  season: "2026-27"
+  game_type: regular
+  first_ticker_date: "2026-12-04"
+  uses: [final_test]
+  excluded_games: []

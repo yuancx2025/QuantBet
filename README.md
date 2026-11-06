@@ -13,9 +13,10 @@ market and basketball data and generates diagnostics; it does not place orders.
 | Part | Status |
 |---|---|
 | Stage 0 data and timing spike | Implemented and run on 10 games from 2025–26 |
-| Findings, holdout exclusion, and training plan | Documented in [`docs/`](docs/) |
-| Production ingestion, feature tables, and models A/B/C | Planned; no trained models yet |
-| Order selector, portfolio backtest, and forward paper plans | Planned |
+| Findings, split decisions, and training plan | Documented in [`docs/`](docs/) |
+| Backtest engine and 2025–26 exchange data pipeline | Implemented and run on 1,230 games; the first fixed-offset ladder shows no edge. See [0005](docs/decisions/0005-backtest-engine-v1.md) |
+| Feature tables and models A/B/C | Planned; no trained models yet |
+| Model-based order selector and forward paper plans | Planned |
 
 Stage 0 validates data access, alignment, and source quirks. Its games were selected
 to include comebacks, blowouts, and other unusual outcomes. They are engineering
@@ -279,16 +280,18 @@ around scoring plays and candle/trade consistency diagnostics.
 
 - **Development:** eligible 2025–26 regular-season games, with chronological
   fit/calibration/evaluation periods. Keep every row from a game in the same split.
-- **Holdout:** 2026–27, tested once after the strategy is frozen. Exclude
-  `KXNBAGAME-26NOV05MIAGSW`, which was inspected during planning; see the
-  [exclusion record](docs/decisions/0002-holdout-exclusion.md).
+- **Tuning:** 2026–27 regular-season games with a ticker date through 2026-12-03.
+- **Holdout:** later 2026–27 games, tested once after the strategy is frozen. See
+  [`configs/splits.yaml`](configs/splits.yaml) and the
+  [decision record](docs/decisions/0004-data-scope-and-tuning-games.md).
 - **Data availability:** join features by when they were available, not when a
   later download describes the event. Candle timestamps mark interval ends.
 - **Evidence:** the training plan sets a reporting floor of 200 fills; reaching it
   alone establishes neither significance nor an advantage.
 - **Open execution questions:** maker fee rates/history and order survival through
-  tipoff remain unresolved. Report gross results and explicit fee sensitivities
-  until those assumptions are verified.
+  tipoff remain unresolved. Testing treats limit orders as free, so results are
+  reported gross and labelled as such; Kalshi lists this series as charging maker
+  fees, so add the verified rate back before presenting net results.
 
 The [training and validation plan](docs/resting-ladder-training-plan.md) specifies
 the proposed datasets, model comparisons, chronological folds, and acceptance
@@ -331,14 +334,62 @@ possible future adapters, and the spike does not load it.
 
 Run the existing lint check with `uv run ruff check .`.
 
+Run the tests with `uv run pytest`.
+
+## Run a backtest
+
+The engine replays history against a strategy, with no model required, and reports what
+would have filled and settled under a stated execution rule. Results are hypothetical
+and gross of fees. Pull the data once (about an hour, and safe to resume), check its
+coverage, then run a strategy config:
+
+```bash
+uv run python scripts/quantbet.py pull
+```
+
+```bash
+uv run python scripts/quantbet.py coverage
+```
+
+```bash
+uv run python scripts/quantbet.py backtest configs/strategies/fixed_offset.yaml
+```
+
+Data goes to `~/QuantBetData/history/`. Each run writes its orders, fills, a report,
+and a manifest to `runs/`, and adds a line to `runs/experiment_log.jsonl`. The commands
+refuse holdout games.
+
+A strategy subclasses `Strategy` and acts through a `Context`, which only exposes what
+has already been replayed:
+
+```python
+class FixedOffsetLadder(Strategy):
+    def on_game_start(self, ctx):
+        ctx.schedule(ctx.game.scheduled_start_us - TWO_HOURS, self.place)
+
+    def place(self, ctx):
+        for market in ctx.game.markets:
+            quote = ctx.quote(market.ticker)
+            ctx.buy_limit(market.ticker, price=quote.mid - 0.10, size=1)
+```
+
+See [`strategies/fixed_offset.py`](src/quantbet_nba/strategies/fixed_offset.py) for the
+full version.
+
 ## Repository guide
 
 ```text
 README.md                              Project intuition and mathematical framework
 pyproject.toml / uv.lock                Python package and locked dependencies
 scripts/stage0_spike.py                 Implemented exploratory data/timing workflow
-src/quantbet_nba/                       Package skeleton; model modules are planned
-docs/decisions/                         Findings, holdout exclusion, proposed changes
+scripts/quantbet.py                     Backtest command line: pull, coverage, backtest
+src/quantbet_nba/data/                  Kalshi and ESPN adapters, dataset, coverage
+src/quantbet_nba/engine/                Replay, fill rules, fees, settlement, portfolio
+src/quantbet_nba/strategies/            Strategy interface and the fixed-offset baseline
+src/quantbet_nba/analytics/             Metrics, game bootstrap, reports, run logging
+configs/splits.yaml                     Tuning and holdout boundaries
+configs/strategies/                     Backtest scenarios
+docs/decisions/                         Findings, split decisions, proposed changes
 docs/resting-ladder-training-plan.md    Proposed model and validation work
 ```
 
